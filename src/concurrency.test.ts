@@ -1,22 +1,27 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-// DEF
+export async function concurrentFetch(reqs: string[], maxConcurrency: number): Promise<Response[]> {
+    if (maxConcurrency < 1) {
+        throw new Error("maxConcurrency needs to be a positive integer");
+    }
+    maxConcurrency = Math.floor(maxConcurrency);
 
-export async function concurrentFetch(reqs: string[], max_concurrency: number): Promise<Response[]> {
-    const tasks = reqs.map((r) => (() => fetch(r)));
+    // not considering invalid URLs / failed fetches for simplicity, focus is on concurrency
     const responses: Response[] = [];
 
     let lastReq = 0;
 
     async function worker() {
-        while (lastReq < tasks.length) {
+        while (lastReq < reqs.length) {
             const current = lastReq++;
-            responses[current] = await tasks[current]();
+            if (current >= reqs.length) return;
+            responses[current] = await fetch(reqs[current]);
         }
     }
 
-    const pool = Array.from({ length: max_concurrency }).map(worker);
-    await Promise.allSettled(pool);
+    const poolSize = Math.min(maxConcurrency, reqs.length);
+    const pool = Array.from({ length: poolSize }).map(worker);
+    await Promise.all(pool); // to consider allSettled
 
     return responses;
 }
@@ -93,7 +98,7 @@ describe('Concurrent fetch', () => {
         return {
             ok: true,
             status: 200,
-            json: { resp },
+            json: async () => ({ resp }),
         }
     })
 
@@ -107,6 +112,20 @@ describe('Concurrent fetch', () => {
     beforeEach(() => {
         fetchMock.mockClear();
         concurrencyManager.reset();
+    })
+
+    it('throws error if maxConcurrency is not positive', async () => {
+        const reqs: string[] = [];
+        const ZERO_CONCURRENCY = 0;
+        const NEGATIVE_CONCURRENCY = -1;
+
+        await expect(() => concurrentFetch(reqs, ZERO_CONCURRENCY))
+            .rejects
+            .toThrowError("maxConcurrency needs to be a positive integer");
+        await expect(() => concurrentFetch(reqs, NEGATIVE_CONCURRENCY))
+            .rejects
+            .toThrowError("maxConcurrency needs to be a positive integer");
+        expect(fetchMock).toBeCalledTimes(0);
     })
 
     it('returns empty resp array for empty request array', async () => {
@@ -129,7 +148,18 @@ describe('Concurrent fetch', () => {
         expect(fetchMock).toBeCalledTimes(reqs.length);
     })
 
-    // could test order
+    it('responses are ordered', async () => {
+        const reqs = ["url1", "url2", "url3", "url4", "url5"];
+        const MAX_CONCURRENCY = 2;
+
+        const resps = await concurrentFetch(reqs, MAX_CONCURRENCY);
+
+        // fetchMock uses indexes, matching by that for test's sake
+        for (let i = 0; i < resps.length; i++) {
+            const json = await resps[i].json();
+            expect(json["resp"]).toBe(`resp-${i + 1}`);
+        };
+    })
 
     it('runs two requests at a time from the request array', async () => {
         const reqs = ["url1", "url2", "url3", "url4", "url5"];
@@ -152,5 +182,14 @@ describe('Concurrent fetch', () => {
         const nextEvent = eventLog[firstStopIndex + 1];
         expect(nextEvent.event).toBe("start");
         expect(nextEvent.timestamp - stopEvent.timestamp).toBeLessThanOrEqual(1); //ms
+    })
+
+    it('more concurrency than request runs at most all requets', async () => {
+        const reqs = ["url1", "url2", "url3"];
+        const MAX_CONCURRENCY = 5;
+
+        await concurrentFetch(reqs, MAX_CONCURRENCY);
+
+        expect(concurrencyManager.max).toBe(reqs.length);
     })
 });
