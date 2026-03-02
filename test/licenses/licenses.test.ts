@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { getLicensePlateByIndex } from '../../licenses/get-license-plate-by-index'
-import { CHARS_PER_LICENSE, LETTERS } from '../../licenses/constants'
+import { LETTERS, CHARS_PER_LICENSE } from '../../src/licenses/constants'
+import { getLicensePlateByIndex } from '../../src/licenses/get-license-plate-by-index'
 
 describe('License plate', () => {
     test('returns first license', () => {
