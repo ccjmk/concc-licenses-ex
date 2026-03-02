@@ -15,8 +15,8 @@ function getLicense(index: number, blockStartIndex: number, numberOfDigits: numb
     return numericPart + letterPart;
 }
 
-export function getLicensePlateByIndex(index: number): string {
-    index = Math.floor(index);
+export function getLicensePlateByIndex(licenseIndex: number): string {
+    const index = Math.floor(licenseIndex);
 
     if (index < 0) {
         return "N/A";

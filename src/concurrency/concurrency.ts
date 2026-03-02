@@ -4,10 +4,10 @@ type FetchResult =
     | { ok: false; response: Response };
 
 export async function concurrentFetch(reqs: string[], maxConcurrency: number): Promise<FetchResult[]> {
-    if (maxConcurrency < 1) {
+    const concurrency = Math.floor(maxConcurrency);
+    if (concurrency < 1) {
         throw new Error("maxConcurrency needs to be a positive integer");
     }
-    maxConcurrency = Math.floor(maxConcurrency);
 
     const responses: FetchResult[] = new Array(reqs.length);
 
@@ -31,8 +31,8 @@ export async function concurrentFetch(reqs: string[], maxConcurrency: number): P
         }
     }
 
-    const poolSize = Math.min(maxConcurrency, reqs.length);
-    const pool = Array.from({ length: poolSize }).map(worker);
+    const poolSize = Math.min(concurrency, reqs.length);
+    const pool = Array.from({ length: poolSize }, worker);
     await Promise.all(pool);
 
     return responses;
