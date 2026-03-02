@@ -6,6 +6,7 @@ const LETTERS = 26;
 
 function toLetterBase(num: number, qLetters: number) {
     let letters = '';
+    if (num < 0 || qLetters < 1) return '';
 
     while (num > 0) {
         let r = num % LETTERS;
@@ -25,7 +26,7 @@ function getLicense(index: number, first: number, qDigits: number) {
     const r = offset % qLicensesPerLetter;
     const l = (offset - r) / qLicensesPerLetter;
     const letterPart = toLetterBase(l, qLetters)
-    const numericPart = r.toString().padStart(qDigits, "0");
+    const numericPart = qDigits ? r.toString().padStart(qDigits, "0") : '';
 
     return numericPart + letterPart;
 }
@@ -58,7 +59,11 @@ describe('License plate', () => {
         expect(getLicensePlateByIndex(1)).toBe("000001")
     })
 
-    test('returns license at 999999 (last pure number)', () => {
+    test('returns numeric license', () => {
+        expect(getLicensePlateByIndex(123456)).toBe("123456")
+    })
+
+    test('returns license at 999999 (last numberic)', () => {
         expect(getLicensePlateByIndex(999_999)).toBe("999999")
     })
 
@@ -71,7 +76,7 @@ describe('License plate', () => {
     })
 
     test('returns license 99999A', () => {
-        expect(getLicensePlateByIndex(1_099_999)).toBe("99999A")
+        expect(getLicensePlateByIndex(1_000_000 + 99_999)).toBe("99999A")
     })
 
     test('returns first license with 1 letter B', () => {
@@ -90,32 +95,41 @@ describe('License plate', () => {
         expect(getLicensePlateByIndex(1_000_000 + 26 * 100_000 + 10_000)).toBe("0000AB")
     })
 
-    test('returns out of range negative', () => {
+    test('returns license with all letters', () => {
+        // i just binary-searched this number by hand for the fun of it
+        expect(getLicensePlateByIndex(192_941_625)).toBe("ABCDEF")
+    })
+
+    test('returns N/A for range negative', () => {
         expect(getLicensePlateByIndex(-1)).toBe("N/A")
     })
 
-    test('returns out of range over max', () => {
-        expect(getLicensePlateByIndex(501_363_136 + 1)).toBe("N/A")
+    test('returns last valid license', () => {
+        expect(getLicensePlateByIndex(501_363_136 - 1)).toBe("ZZZZZZ")
     })
 
-    test('returns last valid license', () => {
-        expect(getLicensePlateByIndex(501_363_136 - 1)).not.toBe("N/A")
+    test('returns N/A for range over max', () => {
+        expect(getLicensePlateByIndex(501_363_136)).toBe("N/A")
     })
 
     test('handles floating point by flooring', () => {
         expect(getLicensePlateByIndex(1.9)).toBe("000001")
     })
 
-    test('returns 100k boundary (00000B starts)', () => {
-        expect(getLicensePlateByIndex(1_100_000)).toBe("00000B")
-    })
-
-    test('returns position in middle range', () => {
-        expect(getLicensePlateByIndex(500_000)).toBe("500000")
+    test('all licences have 6 characters', () => {
+        // picking a collection of previous cases
+        expect(getLicensePlateByIndex(0)).toHaveLength(6);
+        expect(getLicensePlateByIndex(123456)).toHaveLength(6);
+        expect(getLicensePlateByIndex(1_000_000 + 26 * 100_000 + 9_999)).toHaveLength(6);
+        expect(getLicensePlateByIndex(501_363_136 - 1)).toHaveLength(6);
     })
 })
 
 describe('Letter matching', () => {
+    test('returns 1st letter', () => {
+        expect(toLetterBase(0, 1)).toBe("A")
+    })
+
     test('returns 7th letter', () => {
         expect(toLetterBase(7, 1)).toBe("H")
     })
@@ -124,23 +138,37 @@ describe('Letter matching', () => {
         expect(toLetterBase(8, 1)).toBe("I")
     })
 
-    test('returns 26th letters', () => {
+    test('returns index 1 of two letters', () => {
         expect(toLetterBase(1, 2)).toBe("AB")
     })
 
-    test('returns 27th letter', () => {
+    test('returns index 26 of two letters (first one over one-letter limit)', () => {
         expect(toLetterBase(26, 2)).toBe("BA")
     })
 
-    test('returns 27th letter', () => {
-        expect(toLetterBase(27, 2)).toBe("BB")
-    })
-
-    test('returns 2th 6-letter', () => {
+    test('returns index 1 of 6-letter', () => {
         expect(toLetterBase(1, 6)).toBe("AAAAAB")
     })
 
-    test('returns 2th 6-letter', () => {
+    test('returns three C', () => {
         expect(toLetterBase(1406, 6)).toBe("AAACCC")
+    })
+
+    // edge cases for toLetterBase
+    test('zero returns all A', () => {
+        expect(toLetterBase(0, 3)).toBe("AAA")
+    })
+
+    test('negative index returns empty', () => {
+        expect(toLetterBase(-5, 3)).toBe("")
+    })
+
+    test('zero/negative qLetters returns empty', () => {
+        expect(toLetterBase(0, 0)).toBe("");
+        expect(toLetterBase(0, -1)).toBe("");
+    })
+
+    test('zero qLetter with index returns value', () => {
+        expect(toLetterBase(2, 0)).toBe("");
     })
 });
