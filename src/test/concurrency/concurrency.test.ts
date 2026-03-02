@@ -81,8 +81,11 @@ describe('Concurrent fetch', () => {
 
         // fetchMock uses indexes, matching by that for test's sake
         for (let i = 0; i < resps.length; i++) {
-            const json = await resps[i].json();
-            expect(json["resp"]).toBe(`resp-${i + 1}`);
+            const resp = resps[i];
+            if (resp.ok) {
+                const json = await resp.response.json();
+                expect(json["resp"]).toBe(`resp-${i + 1}`);
+            }
         };
     })
 

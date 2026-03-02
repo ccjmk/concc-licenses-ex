@@ -1,11 +1,15 @@
-export async function concurrentFetch(reqs: string[], maxConcurrency: number): Promise<Response[]> {
+type FetchResult =
+    | { ok: true; response: Response }
+    | { ok: false; error: unknown }
+    | { ok: false; response: Response };
+
+export async function concurrentFetch(reqs: string[], maxConcurrency: number): Promise<FetchResult[]> {
     if (maxConcurrency < 1) {
         throw new Error("maxConcurrency needs to be a positive integer");
     }
     maxConcurrency = Math.floor(maxConcurrency);
 
-    // not considering invalid URLs / failed fetches for simplicity, focus is on concurrency
-    const responses: Response[] = [];
+    const responses: FetchResult[] = new Array(reqs.length);
 
     let lastReq = 0;
 
@@ -13,13 +17,23 @@ export async function concurrentFetch(reqs: string[], maxConcurrency: number): P
         while (lastReq < reqs.length) {
             const current = lastReq++;
             if (current >= reqs.length) return;
-            responses[current] = await fetch(reqs[current]);
+            try {
+                const response = await fetch(reqs[current]);
+                if (!response.ok) {
+                    responses[current] = { ok: false, response };
+                } else {
+                    responses[current] = { ok: true, response };
+                }
+            } catch (error) {
+                responses[current] = { ok: false, error };
+            }
+
         }
     }
 
     const poolSize = Math.min(maxConcurrency, reqs.length);
     const pool = Array.from({ length: poolSize }).map(worker);
-    await Promise.all(pool); // to consider allSettled
+    await Promise.all(pool);
 
     return responses;
 }
