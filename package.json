@@ -1,0 +1,17 @@
+{
+  "name": "sita-tech",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "test:concurrency": "vitest concurrency",
+    "test:licenses": "vitest licenses"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
+}
