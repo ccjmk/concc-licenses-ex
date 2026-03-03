@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { toLetterBase } from "../../src/licenses/to-letter-base";
+import { toLetterBase } from "./to-letter-base";
 
 describe('Letter matching', () => {
     test('returns 1st letter', () => {

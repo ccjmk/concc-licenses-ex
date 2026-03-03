@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ConcurrencyCounter } from './utils/concurrency-counter';
-import { concurrentFetch } from '../../src/concurrency/concurrency';
+import { ConcurrencyCounter } from '../../test/concurrency/utils/concurrency-counter';
+import { concurrentFetch } from './concurrency';
 
 function pause(ms: number) {
     return new Promise((resolve) => {

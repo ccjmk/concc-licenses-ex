@@ -2,18 +2,27 @@
 
 As the instructions mentioned a single deliverable per question, but there was some ambiguety _(for example on the first question it mentions "implement a function that", but then also "How would you write a test for such a function?")_, I preferred to err on the side of caution and implement both solutions (both the working function(s) and the corresponding test(s)) following a standard file structure with the number of files I considered best, and test split into their own files.
 
-You can file the main functions here:
+You can find the files for the first question here:
 ```
 /src/concurrency/concurrency.ts
-/src/licenses/get-license-plate-by-index.ts
-/src/licenses/to-letter-base.ts
+/src/concurrency/concurrency.test.ts
 ```
 
-and the tests here:
+and the second question here:
 ```
-/test/concurrency/concurrency.test.ts
-/test/licenses/licenses.test.ts
-/test/licenses/to-letter-base.test.ts
+/src/licenses/get-license-plate-by-index.ts
+/src/licenses/licenses.test.ts
+/src/licenses/to-letter-base.ts
+/src/licenses/to-letter-base.test.ts
+```
+
+## Tests
+You can also run the tests for each question by executing:
+```bash
+# first do 'npm install' if not done before
+npm run test:concurrency
+npm run test:licenses
+# can also do 'npm test' for the whole test suite
 ```
 
 ### Assumptions
